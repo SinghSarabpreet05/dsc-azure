@@ -1,0 +1,64 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachineName": {
+            "type": "String"
+        },
+        "location": {
+            "type": "String"
+        },
+        "automationAccountName": {
+            "type": "String"
+        },
+        "NodeConfigName": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('virtualMachineName'),'/', 'Microsoft.Powershell.DSC')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.77",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                    "Items": {
+                        "registrationKeyPrivate": "[listKeys(resourceId('aae39db0-601f-407f-bcfe-0770034dcb71', 'cloudops-mgmt-rg', 'Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2018-06-30').Keys[0].value]"
+                    }
+                },
+                "settings": {
+                    "Properties": [
+                        {
+                            "Name": "RegistrationKey",
+                            "Value": {
+                                "UserName": "sarabpreetx.singh@hm.com",
+                                "Password": "PrivateSettingsRef:registrationKeyPrivate"
+                            },
+                            "TypeName": "System.Management.Automation.PSCredential"
+                        },
+                        {
+                            "Name": "RegistrationUrl",
+                            "Value": "[reference(resourceId('bf01f4d2-f0be-48ae-9d13-1ba764fbc9be', 'hm-landingzone-rg', 'Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2018-06-30').registrationUrl]",
+                            "TypeName": "System.String"
+                        },
+                        {
+                            "Name": "NodeConfigurationName",
+                            "Value": "[parameters('NodeConfigName')]",
+                            "TypeName": "System.String"
+                        },
+                        {
+                            "Name": "ConfigurationMode",
+                            "Value": "ApplyandAutoCorrect",
+                            "TypeName": "System.String"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
